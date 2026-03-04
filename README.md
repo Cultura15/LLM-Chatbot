@@ -10,6 +10,14 @@ A voice-powered chatbot that helps you learn Japanese through translation and co
 - **Knowledge Base** — Answers factual questions from built-in documents
 - **Local LLM** — Runs entirely on your machine via Ollama
 
+#
+
+![Project Image](https://raw.githubusercontent.com/Cultura15/LLM-Chatbot/main/assets/output.png)
+
+#
+
+![Project Image](https://raw.githubusercontent.com/Cultura15/LLM-Chatbot/main/assets/output2.png)
+
 ## Requirements
 
 ### 1. Install Python Dependencies
