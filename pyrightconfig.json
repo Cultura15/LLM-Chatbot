@@ -1,0 +1,15 @@
+{
+  "include": ["chatbot", "voice", "server", "knowledge_base"],
+  "exclude": ["__pycache__", "*.pyc"],
+  "venvPath": "C:\\Python313",
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownArgumentType": false,
+  "reportCallInDefaultInitializer": false,
+  "reportImplicitOverride": false,
+  "reportPrivateImportUsage": false
+}

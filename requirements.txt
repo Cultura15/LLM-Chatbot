@@ -1,0 +1,11 @@
+httpx==0.28.1
+python-dotenv==1.2.1
+SpeechRecognition 
+PyAudio  
+edge-tts
+pygame 
+deep-translator 
+jaconv 
+pyttsx3
+pytest>=8.0.0
+pytest-mock>=3.12.0
