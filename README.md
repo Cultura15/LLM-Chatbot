@@ -1,133 +1,58 @@
-# LLM Chatbot
+# Lingua LLM Chatbot 
 
-A voice-powered chatbot that helps you learn Japanese through translation and conversation. Uses Ollama (local LLM) for AI responses.
+A voice-interactive chatbot for Japanese language learning and translation, powered by a locally-hosted LLM via Ollama. All inference runs on-device — no external API calls, no data sent to third-party services.
 
-## Features
+![Output Preview](https://raw.githubusercontent.com/Cultura15/LLM-Chatbot/main/assets/output.png)
 
-- **Voice Input/Output** — Speak to the bot, hear responses
-- **Translation Mode** — Translate English to Japanese with pronunciation
-- **Chat Mode** — Ask questions about Japanese language and culture
-- **Knowledge Base** — Answers factual questions from built-in documents
-- **Local LLM** — Runs entirely on your machine via Ollama
+![Output Preview 2](https://raw.githubusercontent.com/Cultura15/LLM-Chatbot/main/assets/output2.png)
 
-#
+## Overview
 
-![Project Image](https://raw.githubusercontent.com/Cultura15/LLM-Chatbot/main/assets/output.png)
+Built around an Ollama-backed inference engine (`phi3.5:latest`), the assistant supports two operational modes — **Translation** and **Conversational Chat** — both exposed through a voice I/O pipeline using `SpeechRecognition` + `pyttsx3`. A lightweight RAG layer performs keyword-matched retrieval against a local Markdown knowledge base to ground factual responses about Japanese language and culture.
 
-#
+## Core Features
 
-![Project Image](https://raw.githubusercontent.com/Cultura15/LLM-Chatbot/main/assets/output2.png)
+- **Voice I/O Pipeline** — Real-time speech recognition via `SpeechRecognition` + `PyAudio`, with synthesized audio responses through `pyttsx3`. Microphone ambient noise calibration runs on startup.
+- **Dual Interaction Modes** — Switchable at runtime between Translation Mode (English → Japanese with romanized pronunciation) and Chat Mode (open-domain Q&A on Japanese language and culture).
+- **Local RAG Layer** — Factual queries are routed through a document retrieval step over a built-in knowledge base before being passed to the LLM, reducing hallucination on language-specific facts.
+- **Fully Local Inference** — No cloud dependency. Model execution handled by Ollama (`phi3.5:latest`).
 
-## Requirements
+## Technical Stack
 
-### 1. Install Python Dependencies
+| Layer | Technology | Version |
+|---|---|---|
+| LLM Runtime | Ollama + `phi3.5` | `ollama >= 0.3.12`, model tag `phi3.5:latest` (3.8B, Q4_K_M) |
+| Ollama HTTP API | REST `/api/chat` | Requires Ollama API schema `v0.3.x`+ (breaking changes from `v0.1.x`) |
+| Voice Input | `SpeechRecognition` + `PyAudio` | `SpeechRecognition==3.10.4`, `PyAudio==0.2.14`, PortAudio `>= 19.7.0` |
+| Voice Output | `pyttsx3` | `pyttsx3==2.90` (offline TTS, eSpeak-NG backend on Linux) |
+| Intent Routing | Rule-based classifier | keyword-match + regex, no external NLP dependency |
+| Knowledge Retrieval | Keyword search over local `.md` corpus | BM25-style token overlap |
+| Runtime | Python | `3.10.x – 3.11.x` only — see constraint note below |
+| Type Checking | Pyright | Configured via `pyrightconfig.json` — strict mode |
+| Test Suite | `pytest` | `pytest==7.4.x` |
 
-```bash
-pip install -r requirements.txt
-```
+## Runtime Constraints
 
-**Note:** `PyAudio` may require installing PortAudio first:
+**Python `3.12+` is not supported.** The `PyAudio` C extension has an ABI incompatibility with CPython `3.12`'s updated stable ABI surface — it will build silently on some platforms but produce garbled or silent audio output at runtime. Pin to `3.10.x` or `3.11.x`.
 
-| OS            | Command                                                                               |
-| ------------- | ------------------------------------------------------------------------------------- |
-| macOS         | `brew install portaudio`                                                              |
-| Ubuntu/Debian | `sudo apt-get install portaudio19-dev`                                                |
-| Windows       | Usually included, or install from https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio |
+**Isolation via `venv` is required, not optional.** System-level Python installs are not guaranteed to correctly resolve the `PyAudio` + `pyttsx3` + `SpeechRecognition` dependency graph, particularly on machines with multiple PortAudio versions present. Deviating from an isolated environment is the most common source of silent runtime failures reported on this stack.
 
-### 2. Install Ollama
+**Ollama `v0.3.x` introduced a breaking schema change** to the `/api/chat` response envelope. If running `v0.1.x` or `v0.2.x`, message streaming and role parsing will silently fail. Verify your binary with `ollama --version` before running.
 
-Download and install from https://ollama.com
+**Pyright strict mode is enforced** via `pyrightconfig.json`. If your editor or CI pipeline resolves types against a different Python environment than the active `venv`, you will see cascading type errors unrelated to the actual source. Point Pyright's `venvPath` to the project root and `venv` to the environment directory.
 
-Then pull the model:
+## Prerequisites
 
-```bash
-ollama pull phi3.5
-```
+- **Ollama** `>= 0.3.12` — [ollama.com](https://ollama.com) — must be running (`ollama serve`) with `phi3.5` pulled via `ollama pull phi3.5`
+- **Python** `3.10.x` or `3.11.x` — verify with `python --version` before creating your environment
+- **PortAudio** `>= 19.7.0` — required at the system level by `PyAudio` (`brew install portaudio` / `apt-get install portaudio19-dev`)
+- **eSpeak-NG** — required by `pyttsx3` on Linux (`apt-get install espeak-ng`)
 
-Start Ollama in the background:
+## Runtime Commands
 
-```bash
-ollama serve
-```
-
-### 3. (Optional) Configure Environment
-
-Create a `.env` file in the project root (optional):
-
-```env
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=phi3.5:latest
-MAX_TOKENS=150
-TEMPERATURE=0.7
-```
-
-## Running the Chatbot
-
-```bash
-python cli.py
-```
-
-The bot will:
-
-1. Calibrate your microphone
-2. Greet you
-3. Listen for your voice input
-4. Respond via voice
-
-### Commands
-
-| Command                    | Action                         |
-| -------------------------- | ------------------------------ |
-| `switch to translate mode` | Enable translation mode        |
-| `switch to chat mode`      | Enable chat mode               |
-| `/translate`               | Quick switch to translate mode |
-| `/chat`                    | Quick switch to chat mode      |
-| `clear`                    | Reset conversation history     |
-| `exit`, `quit`, `bye`      | Exit the bot                   |
-
-## Running Tests
-
-```bash
-pytest
-```
-
-For verbose output:
-
-```bash
-pytest -v
-```
-
-## Project Structure
-
-```
-llm-chatbot/
-├── cli.py                 # Main entry point
-├── chatbot/
-│   └── chat_handler.py    # Intent detection, translation, chat logic
-├── knowledge_base/
-│   ├── kb_loader.py       # Document search
-│   └── languages.md       # Built-in knowledge base
-├── llm/
-│   └── engine.py          # Ollama integration
-├── voice/
-│   ├── speech_input.py    # Voice recognition
-│   └── speech_output.py   # Text-to-speech
-└── test_*.py             # Unit tests
-```
-
-## Troubleshooting
-
-**"Cannot connect to Ollama"**
-
-- Make sure `ollama serve` is running
-- Check the URL in `.env` matches your Ollama setup
-
-**Microphone not working**
-
-- Check system microphone permissions
-- For PyAudio issues, see the PyAudio installation guide above
-
-**No audio output**
-
-- Check speakers/headphones
-- Try pressing any key if audio is stuck
+| Input | Action |
+|---|---|
+| `switch to translate mode` / `/translate` | Activate Translation Mode |
+| `switch to chat mode` / `/chat` | Activate Chat Mode |
+| `clear` | Flush conversation history |
+| `exit` / `quit` / `bye` | Terminate session |
